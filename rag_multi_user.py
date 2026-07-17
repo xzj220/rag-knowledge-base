@@ -30,10 +30,12 @@ LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://lindaai.cn/v1")
 LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 
 llm = None  # 棣栨浣跨敤鏃舵寜闇€鍒濆鍖?
-DATA_DIR = Path(os.environ.get("DATA_DIR", "D:\\"))
+DATA_DIR = Path(os.environ.get("DATA_DIR", "/data"))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 DB_PATH = os.environ.get("DB_PATH", str(DATA_DIR / "rag_users.db"))
 CHROMA_PATH = os.environ.get("CHROMA_PATH", str(DATA_DIR / "rag_multi_db"))
 CONV_DIR = Path(os.environ.get("CONV_DIR", str(DATA_DIR / "rag_conversations")))
+CONV_DIR.mkdir(parents=True, exist_ok=True)
 
 def init_user_db():
     conn = sqlite3.connect(DB_PATH)
