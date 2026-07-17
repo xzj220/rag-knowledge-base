@@ -1,4 +1,4 @@
-import os, json, time
+﻿import os, json, time
 os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 from flask import Flask, request, jsonify, render_template_string, session
@@ -17,14 +17,13 @@ app = Flask(__name__)
 app.secret_key = "rag-secret-key-2024"
 model = SentenceTransformer('BAAI/bge-m3')
 
-# ===== LLM 配置（用于 RetrievalQA 生成答案） =====
-# 联达AI 大模型聚合平台：https://lindaai.cn
+# ===== LLM 閰嶇疆锛堢敤浜?RetrievalQA 鐢熸垚绛旀锛?=====
+# 鑱旇揪AI 澶фā鍨嬭仛鍚堝钩鍙帮細https://lindaai.cn
 LLM_API_KEY = "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9"
 LLM_BASE_URL = "https://lindaai.cn/v1"
 LLM_MODEL = "deepseek-v4-flash"
 
-llm = None  # 首次使用时按需初始化
-
+llm = None  # 棣栨浣跨敤鏃舵寜闇€鍒濆鍖?
 def init_user_db():
     conn = sqlite3.connect(r"D:\rag_users.db")
     conn.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)")
@@ -66,8 +65,7 @@ def get_user_collection(username):
     try: return client.get_collection(name, embedding_function=None)
     except: return client.create_collection(name, embedding_function=None)
 
-# 每个用户的文档计数器（存在内存里，避免每次 count() 查库）
-_doc_counters = {}
+# 姣忎釜鐢ㄦ埛鐨勬枃妗ｈ鏁板櫒锛堝瓨鍦ㄥ唴瀛橀噷锛岄伩鍏嶆瘡娆?count() 鏌ュ簱锛?_doc_counters = {}
 def next_id(username):
     col = get_user_collection(username)
     if username not in _doc_counters:
@@ -75,9 +73,9 @@ def next_id(username):
     _doc_counters[username] += 1
     return f"doc_{_doc_counters[username]}"
 
-LOGIN_HTML = """<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAG - 登录</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1b2e;font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}.card{background:#22233a;border:1px solid #3d3e5c;border-radius:12px;padding:40px;width:380px}h1{text-align:center;color:#ecedf5;margin-bottom:8px;font-size:24px;font-weight:600}p{text-align:center;color:#b8b9d0;margin-bottom:24px;font-size:14px}input{width:100%;padding:12px 16px;border:1px solid #3d3e5c;border-radius:8px;font-size:14px;outline:none;margin-bottom:12px;background:#2a2b46;color:#ecedf5;transition:border-color .2s}input:focus{border-color:#818cf8}input::placeholder{color:#80819e}.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:#818cf8;color:#fff;margin-bottom:8px;transition:opacity .2s}.btn:hover{opacity:.9}.link{text-align:center;font-size:13px;color:#818cf8;cursor:pointer;margin-top:8px}.link:hover{text-decoration:underline}.err{color:#fb7185;font-size:13px;text-align:center;margin-top:8px}</style></head><body><div class="card"><h1>RAG 知识库</h1><p>登录后使用个人知识库</p><form method="POST" action="/login"><input name="username" placeholder="用户名" autocomplete="username" required><input name="password" type="password" placeholder="密码" autocomplete="current-password" required><button class="btn">登录</button></form><div class="link" onclick="location.href='/reg'">没有账号？注册</div>{% if err %}<div class="err">{{ err }}</div>{% endif %}</div></body></html>"""
+LOGIN_HTML = """<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAG - 鐧诲綍</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1b2e;font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}.card{background:#22233a;border:1px solid #3d3e5c;border-radius:12px;padding:40px;width:380px}h1{text-align:center;color:#ecedf5;margin-bottom:8px;font-size:24px;font-weight:600}p{text-align:center;color:#b8b9d0;margin-bottom:24px;font-size:14px}input{width:100%;padding:12px 16px;border:1px solid #3d3e5c;border-radius:8px;font-size:14px;outline:none;margin-bottom:12px;background:#2a2b46;color:#ecedf5;transition:border-color .2s}input:focus{border-color:#818cf8}input::placeholder{color:#80819e}.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:#818cf8;color:#fff;margin-bottom:8px;transition:opacity .2s}.btn:hover{opacity:.9}.link{text-align:center;font-size:13px;color:#818cf8;cursor:pointer;margin-top:8px}.link:hover{text-decoration:underline}.err{color:#fb7185;font-size:13px;text-align:center;margin-top:8px}</style></head><body><div class="card"><h1>RAG 鐭ヨ瘑搴?/h1><p>鐧诲綍鍚庝娇鐢ㄤ釜浜虹煡璇嗗簱</p><form method="POST" action="/login"><input name="username" placeholder="鐢ㄦ埛鍚? autocomplete="username" required><input name="password" type="password" placeholder="瀵嗙爜" autocomplete="current-password" required><button class="btn">鐧诲綍</button></form><div class="link" onclick="location.href='/reg'">娌℃湁璐﹀彿锛熸敞鍐?/div>{% if err %}<div class="err">{{ err }}</div>{% endif %}</div></body></html>"""
 
-REG_HTML = """<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAG - 注册</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1b2e;font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}.card{background:#22233a;border:1px solid #3d3e5c;border-radius:12px;padding:40px;width:380px}h1{text-align:center;color:#ecedf5;margin-bottom:8px;font-size:24px;font-weight:600}p{text-align:center;color:#b8b9d0;margin-bottom:24px;font-size:14px}input{width:100%;padding:12px 16px;border:1px solid #3d3e5c;border-radius:8px;font-size:14px;outline:none;margin-bottom:12px;background:#2a2b46;color:#ecedf5;transition:border-color .2s}input:focus{border-color:#818cf8}input::placeholder{color:#80819e}.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:#818cf8;color:#fff;margin-bottom:8px;transition:opacity .2s}.btn:hover{opacity:.9}.link{text-align:center;font-size:13px;color:#818cf8;cursor:pointer;margin-top:8px}.link:hover{text-decoration:underline}.msg{color:#34d399;font-size:13px;text-align:center;margin-top:8px}.err{color:#fb7185;font-size:13px;text-align:center;margin-top:8px}</style></head><body><div class="card"><h1>注册账号</h1><p>创建你的个人知识库</p><form method="POST" action="/register"><input name="username" placeholder="用户名" autocomplete="username" required><input name="password" type="password" placeholder="密码" autocomplete="new-password" required><button class="btn">注册</button></form><div class="link" onclick="location.href='/'">已有账号？登录</div>{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}{% if err %}<div class="err">{{ err }}</div>{% endif %}</div></body></html>"""
+REG_HTML = """<!DOCTYPE html><html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RAG - 娉ㄥ唽</title><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1b2e;font-family:'Inter',-apple-system,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}.card{background:#22233a;border:1px solid #3d3e5c;border-radius:12px;padding:40px;width:380px}h1{text-align:center;color:#ecedf5;margin-bottom:8px;font-size:24px;font-weight:600}p{text-align:center;color:#b8b9d0;margin-bottom:24px;font-size:14px}input{width:100%;padding:12px 16px;border:1px solid #3d3e5c;border-radius:8px;font-size:14px;outline:none;margin-bottom:12px;background:#2a2b46;color:#ecedf5;transition:border-color .2s}input:focus{border-color:#818cf8}input::placeholder{color:#80819e}.btn{width:100%;padding:12px;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;background:#818cf8;color:#fff;margin-bottom:8px;transition:opacity .2s}.btn:hover{opacity:.9}.link{text-align:center;font-size:13px;color:#818cf8;cursor:pointer;margin-top:8px}.link:hover{text-decoration:underline}.msg{color:#34d399;font-size:13px;text-align:center;margin-top:8px}.err{color:#fb7185;font-size:13px;text-align:center;margin-top:8px}</style></head><body><div class="card"><h1>娉ㄥ唽璐﹀彿</h1><p>鍒涘缓浣犵殑涓汉鐭ヨ瘑搴?/p><form method="POST" action="/register"><input name="username" placeholder="鐢ㄦ埛鍚? autocomplete="username" required><input name="password" type="password" placeholder="瀵嗙爜" autocomplete="new-password" required><button class="btn">娉ㄥ唽</button></form><div class="link" onclick="location.href='/'">宸叉湁璐﹀彿锛熺櫥褰?/div>{% if msg %}<div class="msg">{{ msg }}</div>{% endif %}{% if err %}<div class="err">{{ err }}</div>{% endif %}</div></body></html>"""
 
 MAIN_HTML = """<!DOCTYPE html>
 <html lang="zh">
@@ -312,57 +310,57 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 
 <div class="mob-overlay" id="mobOverlay" onclick="closeMobNav()"></div>
 <div class="nav" id="navBar">
-  <button class="nav-toggle" onclick="toggleNav()" title="折叠/展开侧栏">☰</button>
+  <button class="nav-toggle" onclick="toggleNav()" title="鎶樺彔/灞曞紑渚ф爮">鈽?/button>
   <div class="nav-item active" data-tab="chat" onclick="switchNav('chat');closeMobNav()">
-    <span class="ico">💬</span><span class="lab">对话</span>
+    <span class="ico">馃挰</span><span class="lab">瀵硅瘽</span>
   </div>
   <div class="nav-item" data-tab="kb" onclick="switchNav('kb');closeMobNav()">
-    <span class="ico">📚</span><span class="lab">知识库</span>
+    <span class="ico">馃摎</span><span class="lab">鐭ヨ瘑搴?/span>
   </div>
   <div class="nav-item" data-tab="add" onclick="switchNav('add');closeMobNav()">
-    <span class="ico">✏️</span><span class="lab">手动录入</span>
+    <span class="ico">鉁忥笍</span><span class="lab">鎵嬪姩褰曞叆</span>
   </div>
   <div class="nav-item" onclick="showConvList();closeMobNav()" style="cursor:pointer">
-    <span class="ico">📜</span><span class="lab">历史对话</span>
+    <span class="ico">馃摐</span><span class="lab">鍘嗗彶瀵硅瘽</span>
   </div>
   <div class="nav-item" onclick="newChat();closeMobNav()" style="cursor:pointer">
-    <span class="ico">✚</span><span class="lab">新对话</span>
+    <span class="ico">鉁?/span><span class="lab">鏂板璇?/span>
   </div>
   <div class="nav-spacer"></div>
   <div class="user">{{ user }}</div>
-  <div class="logout-btn" onclick="location.href='/logout'">退出登录</div>
+  <div class="logout-btn" onclick="location.href='/logout'">閫€鍑虹櫥褰?/div>
 </div>
 <div class="mob-top">
-  <button class="hamburger" onclick="openMobNav()">☰</button>
+  <button class="hamburger" onclick="openMobNav()">鈽?/button>
   <h2>RAG</h2>
-  <button class="btn-ico" onclick="togglePanel()" title="知识库">📋</button>
+  <button class="btn-ico" onclick="togglePanel()" title="鐭ヨ瘑搴?>馃搵</button>
 </div>
 
 <!-- ===== MAIN CHAT ===== -->
 <div class="main" id="mainArea">
   <div class="chat-header">
-    <h2>对话</h2>
-    <button class="btn-ico" onclick="showConvList()" title="历史对话">📜</button>
-    <button class="btn-ico" onclick="togglePanel()" title="知识库面板 (Ctrl+B)">📋</button>
-    <button class="btn-ico" onclick="newChat()" title="新建对话 (Ctrl+L)">✚</button>
+    <h2>瀵硅瘽</h2>
+    <button class="btn-ico" onclick="showConvList()" title="鍘嗗彶瀵硅瘽">馃摐</button>
+    <button class="btn-ico" onclick="togglePanel()" title="鐭ヨ瘑搴撻潰鏉?(Ctrl+B)">馃搵</button>
+    <button class="btn-ico" onclick="newChat()" title="鏂板缓瀵硅瘽 (Ctrl+L)">鉁?/button>
   </div>
   <div class="msgs" id="msgList"></div>
   <div class="input-area">
     <div class="progress-bar" id="progressBar"><div class="fill"></div></div>
     <div class="input-row">
-      <button class="new-chat-btn" id="mobileNewChat" onclick="newChat()" title="新对话" style="display:none">✚</button>
-      <textarea id="chatInput" rows="1" placeholder="输入问题… (Shift+Enter 换行, Enter 发送)" onkeydown="onInputKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="send-btn" id="sendBtn" onclick="sendMsg()">➤</button>
+      <button class="new-chat-btn" id="mobileNewChat" onclick="newChat()" title="鏂板璇? style="display:none">鉁?/button>
+      <textarea id="chatInput" rows="1" placeholder="杈撳叆闂鈥?(Shift+Enter 鎹㈣, Enter 鍙戦€?" onkeydown="onInputKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="sendMsg()">鉃?/button>
     </div>
-    <div class="shortcuts-hint">Ctrl+K 聚焦 · Ctrl+B 面板 · Ctrl+L 新对话 · 📜 历史对话</div>
+    <div class="shortcuts-hint">Ctrl+K 鑱氱劍 路 Ctrl+B 闈㈡澘 路 Ctrl+L 鏂板璇?路 馃摐 鍘嗗彶瀵硅瘽</div>
   </div>
 </div>
 
 <!-- ===== CONVERSATION OVERLAY ===== -->
 <div class="conv-overlay" id="convOverlay" onclick="if(event.target===this)hideConvList()">
   <div class="co-header" onclick="event.stopPropagation()">
-    <button class="back-btn" onclick="hideConvList()">←</button>
-    <h3>历史对话</h3>
+    <button class="back-btn" onclick="hideConvList()">鈫?/button>
+    <h3>鍘嗗彶瀵硅瘽</h3>
     <span id="convTotal" style="font-size:12px;color:var(--text3)"></span>
   </div>
   <div class="conv-list" id="convList" onclick="event.stopPropagation()"></div>
@@ -372,19 +370,19 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 <div class="panel-wrap open" id="panelWrap">
   <div class="panel">
     <div class="panel-header">
-      <h3>知识库</h3>
-      <button class="close-btn" onclick="togglePanel()">✕</button>
+      <h3>鐭ヨ瘑搴?/h3>
+      <button class="close-btn" onclick="togglePanel()">鉁?/button>
     </div>
     <div class="panel-search">
-      <input id="kbSearch" placeholder="搜索知识库…" oninput="filterDocs()">
+      <input id="kbSearch" placeholder="鎼滅储鐭ヨ瘑搴撯€? oninput="filterDocs()">
     </div>
     <div class="panel-body" id="kbBody">
-      <div class="panel-empty">加载中…</div>
+      <div class="panel-empty">鍔犺浇涓€?/div>
     </div>
     <div class="drop-zone" id="kbDrop" onclick="document.getElementById('kbFile').click()">
       <div class="big">+</div>
-      <p>拖拽或点击上传文件</p>
-      <p style="font-size:11px;color:var(--text3);margin-top:4px">PDF / Word / TXT / 图片 (自动OCR)</p>
+      <p>鎷栨嫿鎴栫偣鍑讳笂浼犳枃浠?/p>
+      <p style="font-size:11px;color:var(--text3);margin-top:4px">PDF / Word / TXT / 鍥剧墖 (鑷姩OCR)</p>
     </div>
     <input type="file" id="kbFile" accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.bmp" style="display:none" onchange="uploadDoc(this.files[0])">
     <div class="upload-progress" id="uploadProgress"></div>
@@ -465,11 +463,11 @@ function sendMsg() {
         addMsg('assistant', formatAnswer(d.answer, d.sources || []), d)
         saveConv()
       } else {
-        addMsg('assistant', '<p>未找到相关材料</p>')
+        addMsg('assistant', '<p>鏈壘鍒扮浉鍏虫潗鏂?/p>')
       }
     }).catch(() => {
       bar.classList.remove('active')
-      toast('请求失败，请重试', 'err')
+      toast('璇锋眰澶辫触锛岃閲嶈瘯', 'err')
     }).finally(() => { btn.disabled = false; isSending = false })
 }
 
@@ -482,7 +480,7 @@ function addMsg(role, html, extra) {
   if (extra && role === 'assistant') {
     const ti = extra.timing || {}
     const tk = extra.tokens || {}
-    foot = `<div class="msg-footer"><span>⏱ 检索 ${ti.retrieval||'?'}s</span><span>🧠 ${ti.thinking||'?'}s</span>${tk.input?`<span>📥 ${tk.input}</span><span>📤 ${tk.output}</span>`:''}${extra.sources?`<span>📎 ${extra.sources.length} 个来源</span>`:''}</div>`
+    foot = `<div class="msg-footer"><span>鈴?妫€绱?${ti.retrieval||'?'}s</span><span>馃 ${ti.thinking||'?'}s</span>${tk.input?`<span>馃摜 ${tk.input}</span><span>馃摛 ${tk.output}</span>`:''}${extra.sources?`<span>馃搸 ${extra.sources.length} 涓潵婧?/span>`:''}</div>`
   }
   wrap.innerHTML = `<div class="msg-bubble">${html}${foot}</div><div class="time">${t}</div>`
   list.appendChild(wrap)
@@ -510,7 +508,7 @@ function formatAnswer(text, sources) {
   // Wrap code blocks
     html = html.replace(/```(\w*)\\n([\s\S]*?)```/g, (m, lang, code) => {
     const id = 'cb' + Date.now() + Math.random().toString(36).slice(2,6)
-    return `<div class="code-block"><div class="code-title"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="lang">${lang||'code'}</span><button class="copy-btn" onclick="copyCode(this,'${id}')">复制</button></div><pre id="${id}">${escHtml(code.trim())}</pre></div>`
+    return `<div class="code-block"><div class="code-title"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="lang">${lang||'code'}</span><button class="copy-btn" onclick="copyCode(this,'${id}')">澶嶅埗</button></div><pre id="${id}">${escHtml(code.trim())}</pre></div>`
   })
   html = html.replace(/\\n/g, '<br>')
   return html
@@ -526,7 +524,7 @@ function showRef(el, idx) {
   if (last && last.extra && last.extra.sources && last.extra.sources[idx]) {
     tip.textContent = last.extra.sources[idx].text
   } else {
-    tip.textContent = '来源内容不可用'
+    tip.textContent = '鏉ユ簮鍐呭涓嶅彲鐢?
   }
   const rect = el.getBoundingClientRect()
   tip.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px'
@@ -540,7 +538,7 @@ function closeRef() { document.getElementById('refTooltip').classList.remove('sh
 function copyCode(btn, id) {
   const text = document.getElementById(id).textContent
   navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent; btn.textContent = '✓ 已复制';
+    const orig = btn.textContent; btn.textContent = '鉁?宸插鍒?;
     setTimeout(() => btn.textContent = orig, 1500)
   })
 }
@@ -575,44 +573,44 @@ function toggleFolder(el) {
   const body = el.nextElementSibling
   const icon = el.querySelector('.folder-icon')
   body.classList.toggle('open')
-  icon.textContent = body.classList.contains('open') ? '▼' : '▶'
+  icon.textContent = body.classList.contains('open') ? '鈻? : '鈻?
 }
 
 function renderConvList() {
   const el = document.getElementById('convList')
-  document.getElementById('convTotal').textContent = convs.length ? convs.length + ' 条' : ''
+  document.getElementById('convTotal').textContent = convs.length ? convs.length + ' 鏉? : ''
   if (convs.length === 0) {
-    el.innerHTML = '<div class="conv-empty">暂无历史对话</div>'
+    el.innerHTML = '<div class="conv-empty">鏆傛棤鍘嗗彶瀵硅瘽</div>'
     return
   }
-  // Group by date (e.g. "2024年7月17日 星期三")
+  // Group by date (e.g. "2024骞?鏈?7鏃?鏄熸湡涓?)
   const groups = {}
   convs.forEach(c => {
     const d = new Date(c.updated_at || c.created_at)
-    const wk = ['日','一','二','三','四','五','六'][d.getDay()]
-    const key = d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 星期' + wk
+    const wk = ['鏃?,'涓€','浜?,'涓?,'鍥?,'浜?,'鍏?][d.getDay()]
+    const key = d.getFullYear() + '骞? + (d.getMonth()+1) + '鏈? + d.getDate() + '鏃?鏄熸湡' + wk
     if (!groups[key]) groups[key] = []
     groups[key].push(c)
   })
   // Sort dates descending
-  const sorted = Object.keys(groups).sort((a, b) => new Date(b.replace('年','/').replace('月','/').replace('日','')) - new Date(a.replace('年','/').replace('月','/').replace('日','')))
+  const sorted = Object.keys(groups).sort((a, b) => new Date(b.replace('骞?,'/').replace('鏈?,'/').replace('鏃?,'')) - new Date(a.replace('骞?,'/').replace('鏈?,'/').replace('鏃?,'')))
   let html = ''
   sorted.forEach(dateKey => {
     const items = groups[dateKey]
-    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">▶</span><span class="folder-label">${dateKey}</span><span class="folder-count">${items.length} 条</span></div><div class="conv-folder-body">`
+    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">鈻?/span><span class="folder-label">${dateKey}</span><span class="folder-count">${items.length} 鏉?/span></div><div class="conv-folder-body">`
     items.forEach(c => {
       const active = c.id === curConvId ? ' active' : ''
-      const firstMsg = (c.messages && c.messages.length) ? c.messages[0].html.replace(/<[^>]*>/g,'').slice(0,28) : (c.title || '新对话')
+      const firstMsg = (c.messages && c.messages.length) ? c.messages[0].html.replace(/<[^>]*>/g,'').slice(0,28) : (c.title || '鏂板璇?)
       const d = new Date(c.updated_at || c.created_at)
       const ts = d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
-      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="删除">✕</button></div>`
+      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="鍒犻櫎">鉁?/button></div>`
     })
     html += '</div></div>'
   })
   el.innerHTML = html
   // Auto-open first folder
   const first = el.querySelector('.conv-folder-body')
-  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '▼' }
+  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '鈻? }
 }
 
 function loadConversation(id) {
@@ -629,7 +627,7 @@ function loadConversation(id) {
     let foot = ''
     if (m.extra && m.role === 'assistant') {
       const ti = m.extra.timing || {}; const tk = m.extra.tokens || {}
-      foot = `<div class="msg-footer"><span>⏱ 检索 ${ti.retrieval||'?'}s</span><span>🧠 ${ti.thinking||'?'}s</span>${tk.input?`<span>📥 ${tk.input}</span><span>📤 ${tk.output}</span>`:''}${m.extra.sources?`<span>📎 ${m.extra.sources.length} 个来源</span>`:''}</div>`
+      foot = `<div class="msg-footer"><span>鈴?妫€绱?${ti.retrieval||'?'}s</span><span>馃 ${ti.thinking||'?'}s</span>${tk.input?`<span>馃摜 ${tk.input}</span><span>馃摛 ${tk.output}</span>`:''}${m.extra.sources?`<span>馃搸 ${m.extra.sources.length} 涓潵婧?/span>`:''}</div>`
     }
     wrap.innerHTML = `<div class="msg-bubble">${m.html}${foot}</div>`
     list.appendChild(wrap)
@@ -639,15 +637,15 @@ function loadConversation(id) {
 }
 
 function deleteConversation(id) {
-  if (!confirm('确认删除此对话？')) return
+  if (!confirm('纭鍒犻櫎姝ゅ璇濓紵')) return
   fetch('/conversations/' + id, {method:'DELETE'}).then(r => r.json()).then(d => {
     if (d.ok) {
       if (curConvId === id) { curConvId = null; msgs = []; document.getElementById('msgList').innerHTML = '' }
       convs = convs.filter(c => c.id !== id)
       renderConvList()
-      toast('已删除', 'ok')
+      toast('宸插垹闄?, 'ok')
     }
-  }).catch(() => toast('删除失败', 'err'))
+  }).catch(() => toast('鍒犻櫎澶辫触', 'err'))
 }
 
 function saveConv() {
@@ -663,7 +661,7 @@ const _kbItems = []
 
 function loadDocs() {
   const body = document.getElementById('kbBody')
-  body.innerHTML = '<div class="panel-empty">加载中…</div>'
+  body.innerHTML = '<div class="panel-empty">鍔犺浇涓€?/div>'
   const q = document.getElementById('kbSearch').value.trim().toLowerCase()
   fetch('/kb_docs').then(r => r.json()).then(d => {
     _kbItems.length = 0
@@ -671,11 +669,11 @@ function loadDocs() {
     if (q) items = items.filter(x => x.text.toLowerCase().includes(q))
     _kbItems.push(...items)
     renderDocs(body, items)
-  }).catch(() => { body.innerHTML = '<div class="panel-empty">加载失败</div>' })
+  }).catch(() => { body.innerHTML = '<div class="panel-empty">鍔犺浇澶辫触</div>' })
 }
 
 function renderDocs(body, items) {
-  if (items.length === 0) { body.innerHTML = '<div class="panel-empty">暂无数据</div>'; return }
+  if (items.length === 0) { body.innerHTML = '<div class="panel-empty">鏆傛棤鏁版嵁</div>'; return }
   const groups = {}; let total = 0
   items.forEach(item => {
     const src = item.source || 'unknown'; total++
@@ -686,20 +684,20 @@ function renderDocs(body, items) {
   let html = ''
   // Toolbar
   html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 12px 8px;border-bottom:1px solid var(--border2);flex-shrink:0">'
-  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);cursor:pointer"><input type="checkbox" id="kbSelAll" onchange="kbToggleAll()"> 全选</label>'
-  html += '<button style="padding:3px 10px;border:none;border-radius:4px;background:var(--rose);color:#fff;font-size:11px;cursor:pointer" onclick="kbBatchDelete()">删除选中 (<span id="kbSelCount">0</span>)</button>'
-  html += '<span style="font-size:11px;color:var(--text3);margin-left:auto">共 ' + total + ' 条</span>'
+  html += '<label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text3);cursor:pointer"><input type="checkbox" id="kbSelAll" onchange="kbToggleAll()"> 鍏ㄩ€?/label>'
+  html += '<button style="padding:3px 10px;border:none;border-radius:4px;background:var(--rose);color:#fff;font-size:11px;cursor:pointer" onclick="kbBatchDelete()">鍒犻櫎閫変腑 (<span id="kbSelCount">0</span>)</button>'
+  html += '<span style="font-size:11px;color:var(--text3);margin-left:auto">鍏?' + total + ' 鏉?/span>'
   html += '</div>'
   // Doc groups
   order.forEach(src => {
     const chunks = groups[src]
     const gid = 'g' + Date.now() + Math.random().toString(36).slice(2,6)
     html += `<div class="doc-item" data-gid="${gid}">`
-    html += `<div class="doc-name"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1" onclick="event.stopPropagation()"><input type="checkbox" class="kb-grp-cb" data-gid="${gid}" onchange="kbUpdCount()"> <span class="icon">${src === 'manual' ? '📝' : '📄'}</span>${escHtml(src)}</label></div>`
-    html += `<div class="doc-meta"><span>${chunks.length} 片段</span><span class="tag tag-indexed">已索引</span><span style="margin-left:auto;color:var(--text3);font-size:11px;cursor:pointer" onclick="kbToggleChunks(this,'${gid}')">展开/收起</span></div>`
+    html += `<div class="doc-name"><label style="display:flex;align-items:center;gap:4px;cursor:pointer;flex:1" onclick="event.stopPropagation()"><input type="checkbox" class="kb-grp-cb" data-gid="${gid}" onchange="kbUpdCount()"> <span class="icon">${src === 'manual' ? '馃摑' : '馃搫'}</span>${escHtml(src)}</label></div>`
+    html += `<div class="doc-meta"><span>${chunks.length} 鐗囨</span><span class="tag tag-indexed">宸茬储寮?/span><span style="margin-left:auto;color:var(--text3);font-size:11px;cursor:pointer" onclick="kbToggleChunks(this,'${gid}')">灞曞紑/鏀惰捣</span></div>`
     html += `<div class="doc-chunks open" id="${gid}">`
     chunks.forEach((ch, i) => {
-      let txt = ch.text; if (txt.length > 100) txt = txt.slice(0,100) + '…'
+      let txt = ch.text; if (txt.length > 100) txt = txt.slice(0,100) + '鈥?
       html += `<div class="chunk-item" style="display:flex;align-items:flex-start;gap:4px"><input type="checkbox" class="kb-chk" data-idx="${ch.idx}" onchange="kbUpdCount()" style="margin-top:3px"> <span>${i+1}. ${escHtml(txt)}</span></div>`
     })
     html += '</div></div>'
@@ -734,13 +732,13 @@ function kbToggleChunks(el, gid) {
 
 function kbBatchDelete() {
   const sel = [...document.querySelectorAll('.kb-chk:checked')].map(c => parseInt(c.dataset.idx))
-  if (sel.length === 0) { toast('请选择要删除的条目', 'err'); return }
-  if (!confirm('确认删除选中的 ' + sel.length + ' 条知识？')) return
+  if (sel.length === 0) { toast('璇烽€夋嫨瑕佸垹闄ょ殑鏉＄洰', 'err'); return }
+  if (!confirm('纭鍒犻櫎閫変腑鐨?' + sel.length + ' 鏉＄煡璇嗭紵')) return
   fetch('/batch_delete', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({indices: sel})})
     .then(r => r.json()).then(d => {
-      toast('已删除 ' + sel.length + ' 条', 'ok')
+      toast('宸插垹闄?' + sel.length + ' 鏉?, 'ok')
       loadDocs()
-    }).catch(() => toast('删除失败', 'err'))
+    }).catch(() => toast('鍒犻櫎澶辫触', 'err'))
 }
 
 function filterDocs() { loadDocs() }
@@ -760,29 +758,29 @@ document.getElementById('kbDrop').addEventListener('drop', function(e){
 function uploadDoc(file) {
   if (!file) return
   const ext = file.name.split('.').pop().toLowerCase()
-  if (!['pdf','docx','txt','png','jpg','jpeg','bmp'].includes(ext)) { toast('不支持的文件格式', 'err'); return }
+  if (!['pdf','docx','txt','png','jpg','jpeg','bmp'].includes(ext)) { toast('涓嶆敮鎸佺殑鏂囦欢鏍煎紡', 'err'); return }
   const prog = document.getElementById('uploadProgress')
-  prog.style.display = 'block'; prog.innerHTML = '⏳ 上传处理中 <b>' + escHtml(file.name) + '</b>…'
+  prog.style.display = 'block'; prog.innerHTML = '鈴?涓婁紶澶勭悊涓?<b>' + escHtml(file.name) + '</b>鈥?
   const fd = new FormData(); fd.append('file', file)
   fetch('/upload', {method:'POST', body:fd})
     .then(r => r.json()).then(d => {
       prog.style.display = 'none'
       if (d.ok) { toast(d.msg, 'ok'); loadDocs(); document.getElementById('kbFile').value = '' }
       else toast(d.msg, 'err')
-    }).catch(() => { prog.style.display = 'none'; toast('上传失败', 'err') })
+    }).catch(() => { prog.style.display = 'none'; toast('涓婁紶澶辫触', 'err') })
 }
 
 function showAddPanel() {
   const body = document.getElementById('kbBody')
-  body.innerHTML = `<div class="panel-section"><textarea id="manualInput" placeholder="每行一条：&#10;张三的电话是138xxxx&#10;李四的邮箱是admin@xx.com"></textarea><button class="btn-sm btn-indigo" onclick="manualAdd()">全部存入</button><div style="margin-top:8px;font-size:11px;color:var(--text3)">格式: 问题+是+答案</div></div>`
+  body.innerHTML = `<div class="panel-section"><textarea id="manualInput" placeholder="姣忚涓€鏉★細&#10;寮犱笁鐨勭數璇濇槸138xxxx&#10;鏉庡洓鐨勯偖绠辨槸admin@xx.com"></textarea><button class="btn-sm btn-indigo" onclick="manualAdd()">鍏ㄩ儴瀛樺叆</button><div style="margin-top:8px;font-size:11px;color:var(--text3)">鏍煎紡: 闂+是"绛旀</div></div>`
 }
 
 function manualAdd() {
   const t = document.getElementById('manualInput').value.trim()
-  if (!t) { toast('请输入数据', 'err'); return }
+  if (!t) { toast('璇疯緭鍏ユ暟鎹?, 'err'); return }
   fetch('/add_batch', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text:t})})
     .then(r => r.json()).then(d => { toast(d.msg, 'ok'); document.getElementById('manualInput').value = ''; loadDocs() })
-    .catch(() => toast('出错了', 'err'))
+    .catch(() => toast('鍑洪敊浜?, 'err'))
 }
 
 // ===== KEYBOARD SHORTCUTS =====
@@ -810,7 +808,7 @@ def login():
     if check_user(u, p):
         session["user"] = u; get_user_collection(u)
         return render_template_string(MAIN_HTML, user=u)
-    return render_template_string(LOGIN_HTML, err="用户名或密码错误")
+    return render_template_string(LOGIN_HTML, err="鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒")
 
 @app.route("/reg")
 def reg_page():
@@ -822,7 +820,7 @@ def register():
     if len(u) < 2 or len(p) < 3:
         return render_template_string(REG_HTML, msg="", err="用户名至少2位，密码至少3位")
     if register_user(u, p):
-        return render_template_string(REG_HTML, msg="注册成功，去登录", err="")
+        return render_template_string(REG_HTML, msg="娉ㄥ唽鎴愬姛锛屽幓鐧诲綍", err="")
     return render_template_string(REG_HTML, msg="", err="用户名已存在")
 
 @app.route("/logout")
@@ -839,7 +837,7 @@ def add_batch():
         if "是" not in line: continue
         q, a = line.split("是", 1); q, a = q.strip(), a.strip()
         col.add(documents=[f"{q} | {a}"], embeddings=embed([q]), ids=[next_id(session["user"])], metadatas=[{"source": "manual"}]); c += 1
-    return jsonify({"msg": f"成功存入 {c} 条"})
+    return jsonify({"msg": f"成功存入 {c} \u6761"})
 
 @app.route("/upload", methods=["POST"])
 def upload():
@@ -864,11 +862,10 @@ def upload():
             text = "\n".join([line[1][0] for line in result[0]]) if result and result[0] else ""
             if not text.strip():
                 return jsonify({"msg": "图片中未识别到文字", "ok": False})
-            # 把 OCR 结果当作一个文档片段
-            from langchain_core.documents import Document
+            # 鎶?OCR 缁撴灉褰撲綔涓€涓枃妗ｇ墖娈?            from langchain_core.documents import Document
             docs = [Document(page_content=text, metadata={"source": f.filename})]
         else:
-            return jsonify({"msg": "不支持的文件格式", "ok": False})
+            return jsonify({"msg": "涓嶆敮鎸佺殑鏂囦欢鏍煎紡", "ok": False})
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
         chunks = splitter.split_documents(docs)
         col = get_user_collection(session["user"])
@@ -876,9 +873,9 @@ def upload():
         vecs = embed(texts)
         ids = [next_id(session["user"]) for _ in texts]
         col.add(documents=texts, embeddings=vecs, ids=ids, metadatas=[{"source": f.filename} for _ in texts])
-        return jsonify({"msg": f"成功！{f.filename} → 共 {len(chunks)} 条知识片段", "ok": True})
+        return jsonify({"msg": f"成功：{f.filename} → 共{len(chunks)}条知识片段", "ok": True})
     except Exception as e:
-        return jsonify({"msg": f"处理失败: {str(e)[:60]}", "ok": False})
+        return jsonify({"msg": f"澶勭悊澶辫触: {str(e)[:60]}", "ok": False})
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -905,7 +902,7 @@ def ask():
             fallback = r["documents"][0][0][:300] + "..."
         return jsonify({"answer": fallback})
 
-    # 判断检索结果是否相关（基于 top-1 分数阈值）
+    # 鍒ゆ柇妫€绱㈢粨鏋滄槸鍚︾浉鍏筹紙鍩轰簬 top-1 鍒嗘暟闃堝€硷級
     has_relevant = bool(r["documents"][0]) and (1 / (1 + r["distances"][0][0]) >= 0.45)
 
     t1 = time.time()
@@ -913,14 +910,12 @@ def ask():
         if has_relevant:
             sources = [{"text": r["documents"][0][i], "score": round(1 / (1 + r["distances"][0][i]), 3)} for i in range(len(r["documents"][0]))]
             context_block = "\n\n".join([f"[{i+1}] {c}" for i, c in enumerate(r["documents"][0])])
-            prompt = f"""你是一个专业的知识库问答助手。请基于以下参考材料回答问题。
-
+            prompt = f"""你是一个专业的知识库问答助手。请基于以下参考资料回答问题。
 要求：
-- 如果问题与参考材料相关，请基于材料回答并用 [1][2] 上标标注来源
-- 如果问题与参考材料无关，可以根据自己的知识正常回答
+- 如果问题与参考资料相关，请基于材料回答并用 [1][2] 上标标注来源
+- 如果问题与参考资料无关，可以根据自己的知识正常回答
 - 用中文回答，简洁准确
-
-参考材料：
+参考资料：
 {context_block}
 
 问题：{q}
@@ -929,18 +924,12 @@ def ask():
         else:
             sources = []
             prompt = f"""你是一个智能助手，请回答用户的问题。
-
 要求：
 - 用中文回答，简洁准确
 - 不要编造信息
-
 问题：{q}
 
 回答："""
-
-        resp = llm_client.invoke(prompt)
-        thinking_t = round(time.time() - t1, 2)
-        answer = resp.content
         meta = getattr(resp, "usage_metadata", {}) or {}
         return jsonify({
             "answer": answer, "sources": sources,
@@ -948,7 +937,7 @@ def ask():
             "tokens": {"input": meta.get("input_tokens", 0), "output": meta.get("output_tokens", 0)}
         })
     except Exception as e:
-        err_text = r["documents"][0][0][:200] + "..." if r["documents"][0] else "请求失败"
+        err_text = r["documents"][0][0][:200] + "..." if r["documents"][0] else "璇锋眰澶辫触"
         return jsonify({"answer": err_text, "sources": [], "error": str(e)[:60]})
 
 @app.route("/data")
@@ -980,8 +969,7 @@ def clear_all():
     if "user" not in session: return jsonify({"ok": False})
     client.delete_collection(f"user_{session['user']}")
     _doc_counters[session["user"]] = 0
-    _ = get_user_collection(session["user"])  # 重建空集合
-    return jsonify({"ok": True})
+    _ = get_user_collection(session["user"])  # 閲嶅缓绌洪泦鍚?    return jsonify({"ok": True})
 
 @app.route("/count")
 def count():
@@ -1028,7 +1016,7 @@ def kb_docs():
 
 if __name__ == "__main__":
     import socket, subprocess, time
-    TUNNEL_MODE = ""
+    TUNNEL_MODE = "bore"
     NGROK_TOKEN = ""
     def start_ngrok():
         try:
@@ -1049,8 +1037,9 @@ if __name__ == "__main__":
     print(" 多用户 RAG 问答系统已启动")
     print(f" 本机访问:   http://127.0.0.1:5000")
     print(f" 局域网访问: http://{local_ip}:5000")
-    if public_url: print(f" 外网访问:   {public_url}")
+    print(f" 外网访问:   {public_url}")
     print(f" LLM: {LLM_MODEL if LLM_API_KEY else '未配置'}")
     print(f" Ctrl+B 切换侧栏 · Ctrl+K 聚焦输入 · Ctrl+L 新对话")
     print("=" * 55)
     app.run(debug=False, host="0.0.0.0", port=5000)
+
