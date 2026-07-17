@@ -19,4 +19,4 @@ ENV HF_ENDPOINT=https://hf-mirror.com
 
 EXPOSE $PORT
 
-CMD gunicorn rag_multi_user:app --bind "0.0.0.0:$PORT" --workers 1 --timeout 300 --worker-class sync
+CMD ["python", "entrypoint.py"]
