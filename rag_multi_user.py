@@ -1,5 +1,6 @@
 ﻿import os, json, time
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
+if os.name == "nt":
+    os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
 from flask import Flask, request, jsonify, render_template_string, session
 from sentence_transformers import SentenceTransformer
