@@ -16,11 +16,6 @@ try:
 except ImportError:
     ocr = None
 
-try:
-    from unstructured.documents.elements import Element
-except ImportError:
-    pass
-
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "rag-secret-key-2024")
 model = SentenceTransformer(os.environ.get("EMBED_MODEL", 'BAAI/bge-m3'))

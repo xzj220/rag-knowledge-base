@@ -1,24 +1,13 @@
-# 核心
 flask>=3.0
 gunicorn>=20.0
 sentence-transformers>=2.2
 chromadb>=1.5
 openai>=1.0
-
-# LangChain 生态
 langchain>=0.1
 langchain-community>=0.0.10
 langchain-text-splitters>=0.0.1
 langchain-openai>=0.0.2
-
-# 文件处理
 unstructured>=0.10
 pypdf>=3.0
 python-docx>=0.8.11
-
-# 工具
 pyngrok>=7.0
-
-# OCR（可选，体积大，Railway 部署时去掉）
-# paddleocr>=2.6
-# paddlepaddle>=2.5
