@@ -17,6 +17,4 @@ ENV PYTHONUNBUFFERED=1
 ENV DATA_DIR=/data
 ENV HF_ENDPOINT=https://hf-mirror.com
 
-EXPOSE $PORT
-
 CMD python rag_multi_user.py

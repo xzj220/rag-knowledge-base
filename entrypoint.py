@@ -1,14 +1,7 @@
-import os, sys
+import os
+from rag_multi_user import app
 
-port = os.environ.get("PORT", "5000")
-print(f"[entrypoint] PORT={port!r}")
-print(f"[entrypoint] All env PORT-related: {[(k,v) for k,v in sorted(os.environ.items()) if 'PORT' in k.upper()]}")
-
-os.execvp("gunicorn", [
-    "gunicorn",
-    "rag_multi_user:app",
-    "--bind", f"0.0.0.0:{port}",
-    "--workers", "1",
-    "--timeout", "300",
-    "--worker-class", "sync",
-])
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    print(f"[entrypoint] Starting on port {port}", flush=True)
+    app.run(host="0.0.0.0", port=port, debug=False)

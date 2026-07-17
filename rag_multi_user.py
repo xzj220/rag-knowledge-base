@@ -18,7 +18,12 @@ except ImportError:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "rag-secret-key-2024")
-model = SentenceTransformer(os.environ.get("EMBED_MODEL", 'BAAI/bge-m3'))
+_model = None
+def get_model():
+    global _model
+    if _model is None:
+        _model = SentenceTransformer(os.environ.get("EMBED_MODEL", 'BAAI/bge-m3'))
+    return _model
 
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9")
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://lindaai.cn/v1")
@@ -52,7 +57,7 @@ client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 def embed(texts):
     if isinstance(texts, str): texts = [texts]
-    return model.encode(texts).tolist()
+    return get_model().encode(texts).tolist()
 
 CONV_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -1019,6 +1024,10 @@ def kb_docs():
         meta = all_docs["metadatas"][i] if all_docs.get("metadatas") else {}
         items.append({"id": id_, "text": doc, "idx": i, "source": (meta or {}).get("source", "unknown")})
     return jsonify({"docs": items})
+
+@app.route("/health")
+def health():
+    return "ok", 200
 
 if __name__ == "__main__":
     import socket, subprocess, time, sys
