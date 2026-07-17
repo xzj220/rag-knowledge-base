@@ -19,12 +19,18 @@ except ImportError:
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "rag-secret-key-2024")
+EMBED_MODEL_NAME = os.environ.get("EMBED_MODEL", "all-MiniLM-L6-v2")
 _model = None
 def get_model():
     global _model
     if _model is None:
-        _model = SentenceTransformer(os.environ.get("EMBED_MODEL", 'BAAI/bge-m3'))
+        print(f"Loading embedding model: {EMBED_MODEL_NAME} ...")
+        _model = SentenceTransformer(EMBED_MODEL_NAME)
+        print("Embedding model loaded.")
     return _model
+
+# Pre-load model at startup so Railway health check waits for it
+get_model()
 
 LLM_API_KEY = os.environ.get("LLM_API_KEY", "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9")
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://lindaai.cn/v1")
