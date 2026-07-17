@@ -10,7 +10,6 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --default-timeout=120 -r requirements.txt
 
 COPY . .
-RUN chmod +x start.sh
 
 RUN mkdir -p /data/chroma /data/conversations /root/.cache/huggingface
 
@@ -20,4 +19,4 @@ ENV HF_ENDPOINT=https://hf-mirror.com
 
 EXPOSE $PORT
 
-CMD ["./start.sh"]
+CMD gunicorn rag_multi_user:app --bind "0.0.0.0:$PORT" --workers 1 --timeout 300 --worker-class sync
