@@ -951,6 +951,9 @@ def ask():
 问题：{q}
 
 回答："""
+        resp = llm_client.invoke(prompt)
+        thinking_t = round(time.time() - t1, 2)
+        answer = resp.content
         meta = getattr(resp, "usage_metadata", {}) or {}
         return jsonify({
             "answer": answer, "sources": sources,
