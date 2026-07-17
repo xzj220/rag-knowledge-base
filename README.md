@@ -2,6 +2,14 @@
 
 A multi-user RAG (Retrieval-Augmented Generation) knowledge base system with a web UI. Supports document upload (PDF/Word/TXT/Image OCR), manual QA pair entry, semantic search with LLM-enhanced answers, and conversation history.
 
+## Screenshots
+
+| | |
+|---|---|
+| ![登录页面](screenshots/login.png) | ![注册页面](screenshots/register.png) |
+| ![上传文件](screenshots/upload.png) | ![手动录入](screenshots/manual.png) |
+| ![普通对话](screenshots/chat.png) | ![知识库问答](screenshots/qa.png) |
+
 ## Features
 
 - **Multi-user accounts** — each user has an isolated vector database
