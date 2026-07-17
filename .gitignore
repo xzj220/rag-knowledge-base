@@ -1,0 +1,27 @@
+# Runtime data (user-specific, regenerated on first run)
+D:/rag_multi_db/
+D:/rag_users.db
+D:/rag_conversations/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+*.log
+*.log.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
