@@ -83,7 +83,8 @@ def get_user_collection(username):
     try: return client.get_collection(name, embedding_function=None)
     except: return client.create_collection(name, embedding_function=None)
 
-# 每个用户的文档计数器（存在内存里，避免每次 count() 查询库）_doc_counters = {}
+# 每个用户的文档计数器（存在内存里，避免每次 count() 查询库）
+_doc_counters = {}
 def next_id(username):
     col = get_user_collection(username)
     if username not in _doc_counters:
