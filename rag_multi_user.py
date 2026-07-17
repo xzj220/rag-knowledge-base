@@ -1,4 +1,4 @@
-﻿import os, json, time
+﻿import os, json, time, re
 if os.name == "nt":
     os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 
@@ -475,7 +475,7 @@ function sendMsg() {
   const btn = document.getElementById('sendBtn'); btn.disabled = true; isSending = true
 
   const startT = Date.now()
-  fetch('/ask', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:q})})
+  fetch('/ask', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({q:q, conv_id:curConvId})})
     .then(r => r.json()).then(d => {
       bar.classList.remove('active')
       if (d.answer) {
@@ -918,7 +918,21 @@ def get_llm():
 @app.route("/ask", methods=["POST"])
 def ask():
     if "user" not in session: return jsonify({"answer": ""})
-    q = request.get_json()["q"]
+    data = request.get_json()
+    q = data["q"]
+    conv_id = data.get("conv_id")
+
+    # 加载历史对话（最近 6 条）
+    history = ""
+    if conv_id:
+        convs = load_convs(session["user"])
+        for c in convs:
+            if c.get("id") == conv_id:
+                msgs = c.get("messages", [])[-6:]
+                history = "\n".join(
+                    [f"{'用户' if m['role']=='user' else '助手'}: {re.sub(r'<[^>]+>', '', m.get('html', ''))[:300]}" for m in msgs]
+                )
+                break
 
     t0 = time.time()
     col = get_user_collection(session["user"])
@@ -932,11 +946,11 @@ def ask():
             fallback = r["documents"][0][0][:300] + "..."
         return jsonify({"answer": fallback})
 
-    # 鍒ゆ柇妫€绱㈢粨鏋滄槸鍚︾浉鍏筹紙鍩轰簬 top-1 鍒嗘暟闃堝€硷級
-    has_relevant = bool(r["documents"][0]) and (1 / (1 + r["distances"][0][0]) >= 0.45)
+    has_relevant = bool(r["documents"][0]) and (1 / (1 + r["distances"][0][0]) >= 0.3)
 
     t1 = time.time()
     try:
+        history_block = f"\n历史对话：\n{history}\n" if history else ""
         if has_relevant:
             sources = [{"text": r["documents"][0][i], "score": round(1 / (1 + r["distances"][0][i]), 3)} for i in range(len(r["documents"][0]))]
             context_block = "\n\n".join([f"[{i+1}] {c}" for i, c in enumerate(r["documents"][0])])
@@ -947,8 +961,8 @@ def ask():
 - 用中文回答，简洁准确
 参考资料：
 {context_block}
-
-问题：{q}
+{history_block}
+新问题：{q}
 
 回答："""
         else:
@@ -957,7 +971,8 @@ def ask():
 要求：
 - 用中文回答，简洁准确
 - 不要编造信息
-问题：{q}
+{history_block}
+新问题：{q}
 
 回答："""
         resp = llm_client.invoke(prompt)
