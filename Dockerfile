@@ -19,4 +19,4 @@ ENV HF_ENDPOINT=https://hf-mirror.com
 
 EXPOSE $PORT
 
-CMD ["python", "entrypoint.py"]
+CMD python rag_multi_user.py
