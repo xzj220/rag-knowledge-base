@@ -76,7 +76,7 @@ def get_user_collection(username):
     try: return client.get_collection(name, embedding_function=None)
     except: return client.create_collection(name, embedding_function=None)
 
-# 姣忎釜鐢ㄦ埛鐨勬枃妗ｈ鏁板櫒锛堝瓨鍦ㄥ唴瀛橀噷锛岄伩鍏嶆瘡娆?count() 鏌ュ簱锛?_doc_counters = {}
+# 每个用户的文档计数器（存在内存里，避免每次 count() 查询库）_doc_counters = {}
 def next_id(username):
     col = get_user_collection(username)
     if username not in _doc_counters:
@@ -819,7 +819,7 @@ def login():
     if check_user(u, p):
         session["user"] = u; get_user_collection(u)
         return render_template_string(MAIN_HTML, user=u)
-    return render_template_string(LOGIN_HTML, err="鐢ㄦ埛鍚嶆垨瀵嗙爜閿欒")
+    return render_template_string(LOGIN_HTML, err="用户名或密码错误")
 
 @app.route("/reg")
 def reg_page():
@@ -831,7 +831,7 @@ def register():
     if len(u) < 2 or len(p) < 3:
         return render_template_string(REG_HTML, msg="", err="用户名至少2位，密码至少3位")
     if register_user(u, p):
-        return render_template_string(REG_HTML, msg="娉ㄥ唽鎴愬姛锛屽幓鐧诲綍", err="")
+        return render_template_string(REG_HTML, msg="注册成功，去登录", err="")
     return render_template_string(REG_HTML, msg="", err="用户名已存在")
 
 @app.route("/logout")
@@ -875,10 +875,11 @@ def upload():
             text = "\n".join([line[1][0] for line in result[0]]) if result and result[0] else ""
             if not text.strip():
                 return jsonify({"msg": "图片中未识别到文字", "ok": False})
-            # 鎶?OCR 缁撴灉褰撲綔涓€涓枃妗ｇ墖娈?            from langchain_core.documents import Document
+            # 把 OCR 结果当作一个文档片段
+            from langchain_core.documents import Document
             docs = [Document(page_content=text, metadata={"source": f.filename})]
         else:
-            return jsonify({"msg": "涓嶆敮鎸佺殑鏂囦欢鏍煎紡", "ok": False})
+            return jsonify({"msg": "不支持的文件格式", "ok": False})
         splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
         chunks = splitter.split_documents(docs)
         col = get_user_collection(session["user"])
@@ -888,7 +889,7 @@ def upload():
         col.add(documents=texts, embeddings=vecs, ids=ids, metadatas=[{"source": f.filename} for _ in texts])
         return jsonify({"msg": f"成功：{f.filename} → 共{len(chunks)}条知识片段", "ok": True})
     except Exception as e:
-        return jsonify({"msg": f"澶勭悊澶辫触: {str(e)[:60]}", "ok": False})
+        return jsonify({"msg": f"处理失败: {str(e)[:60]}", "ok": False})
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 
@@ -950,7 +951,7 @@ def ask():
             "tokens": {"input": meta.get("input_tokens", 0), "output": meta.get("output_tokens", 0)}
         })
     except Exception as e:
-        err_text = r["documents"][0][0][:200] + "..." if r["documents"][0] else "璇锋眰澶辫触"
+        err_text = r["documents"][0][0][:200] + "..." if r["documents"][0] else "请求失败"
         return jsonify({"answer": err_text, "sources": [], "error": str(e)[:60]})
 
 @app.route("/data")
@@ -982,7 +983,7 @@ def clear_all():
     if "user" not in session: return jsonify({"ok": False})
     client.delete_collection(f"user_{session['user']}")
     _doc_counters[session["user"]] = 0
-    _ = get_user_collection(session["user"])  # 閲嶅缓绌洪泦鍚?    return jsonify({"ok": True})
+    _ = get_user_collection(session["user"])  # 重新创建空集合    return jsonify({"ok": True})
 
 @app.route("/count")
 def count():
