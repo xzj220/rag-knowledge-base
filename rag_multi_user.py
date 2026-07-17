@@ -849,13 +849,21 @@ def logout():
 @app.route("/add_batch", methods=["POST"])
 def add_batch():
     if "user" not in session: return jsonify({"msg": "未登录"})
-    lines = [l.strip() for l in request.get_json()["text"].strip().split("\n") if l.strip()]
-    col = get_user_collection(session["user"]); c = 0
-    for line in lines:
-        if "是" not in line: continue
-        q, a = line.split("是", 1); q, a = q.strip(), a.strip()
-        col.add(documents=[f"{q} | {a}"], embeddings=embed([q]), ids=[next_id(session["user"])], metadatas=[{"source": "manual"}]); c += 1
-    return jsonify({"msg": f"成功存入 {c} \u6761"})
+    import traceback
+    try:
+        data = request.get_json()
+        if not data or "text" not in data:
+            return jsonify({"msg": "请求数据格式错误"})
+        lines = [l.strip() for l in data["text"].strip().split("\n") if l.strip()]
+        col = get_user_collection(session["user"]); c = 0
+        for line in lines:
+            if "是" not in line: continue
+            q, a = line.split("是", 1); q, a = q.strip(), a.strip()
+            col.add(documents=[f"{q} | {a}"], embeddings=embed([q]), ids=[next_id(session["user"])], metadatas=[{"source": "manual"}]); c += 1
+        return jsonify({"msg": f"成功存入 {c} 条"})
+    except Exception as e:
+        print(f"add_batch error: {traceback.format_exc()}")
+        return jsonify({"msg": f"处理失败: {str(e)[:120]}", "ok": False})
 
 @app.route("/upload", methods=["POST"])
 def upload():
