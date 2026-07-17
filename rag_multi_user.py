@@ -6,50 +6,59 @@ from sentence_transformers import SentenceTransformer
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredWordDocumentLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import ChatOpenAI
-from paddleocr import PaddleOCR
 import chromadb, hashlib, sqlite3, tempfile, shutil
 from datetime import datetime
 from pathlib import Path
 
-ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+try:
+    from paddleocr import PaddleOCR
+    ocr = PaddleOCR(use_angle_cls=True, lang='ch')
+except ImportError:
+    ocr = None
+
+try:
+    from unstructured.documents.elements import Element
+except ImportError:
+    pass
 
 app = Flask(__name__)
-app.secret_key = "rag-secret-key-2024"
-model = SentenceTransformer('BAAI/bge-m3')
+app.secret_key = os.environ.get("SECRET_KEY", "rag-secret-key-2024")
+model = SentenceTransformer(os.environ.get("EMBED_MODEL", 'BAAI/bge-m3'))
 
-# ===== LLM 閰嶇疆锛堢敤浜?RetrievalQA 鐢熸垚绛旀锛?=====
-# 鑱旇揪AI 澶фā鍨嬭仛鍚堝钩鍙帮細https://lindaai.cn
-LLM_API_KEY = "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9"
-LLM_BASE_URL = "https://lindaai.cn/v1"
-LLM_MODEL = "deepseek-v4-flash"
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9")
+LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://lindaai.cn/v1")
+LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 
 llm = None  # 棣栨浣跨敤鏃舵寜闇€鍒濆鍖?
+DATA_DIR = Path(os.environ.get("DATA_DIR", "D:\\"))
+DB_PATH = os.environ.get("DB_PATH", str(DATA_DIR / "rag_users.db"))
+CHROMA_PATH = os.environ.get("CHROMA_PATH", str(DATA_DIR / "rag_multi_db"))
+CONV_DIR = Path(os.environ.get("CONV_DIR", str(DATA_DIR / "rag_conversations")))
+
 def init_user_db():
-    conn = sqlite3.connect(r"D:\rag_users.db")
+    conn = sqlite3.connect(DB_PATH)
     conn.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)")
     conn.commit(); conn.close()
 init_user_db()
 
 def register_user(username, password):
-    conn = sqlite3.connect(r"D:\rag_users.db")
+    conn = sqlite3.connect(DB_PATH)
     pw = hashlib.sha256(password.encode()).hexdigest()
     try: conn.execute("INSERT INTO users VALUES (?, ?)", (username, pw)); conn.commit(); conn.close(); return True
     except: conn.close(); return False
 
 def check_user(username, password):
-    conn = sqlite3.connect(r"D:\rag_users.db")
+    conn = sqlite3.connect(DB_PATH)
     pw = hashlib.sha256(password.encode()).hexdigest()
     r = conn.execute("SELECT * FROM users WHERE username=? AND password=?", (username, pw)).fetchone()
     conn.close(); return r is not None
 
-db_path = r"D:\rag_multi_db"
-client = chromadb.PersistentClient(path=db_path)
+client = chromadb.PersistentClient(path=CHROMA_PATH)
 
 def embed(texts):
     if isinstance(texts, str): texts = [texts]
     return model.encode(texts).tolist()
 
-CONV_DIR = Path(r"D:\rag_conversations")
 CONV_DIR.mkdir(parents=True, exist_ok=True)
 
 def load_convs(username):
@@ -858,6 +867,8 @@ def upload():
             loader = UnstructuredWordDocumentLoader(path)
             docs = loader.load()
         elif ext in ("png", "jpg", "jpeg", "bmp"):
+            if ocr is None:
+                return jsonify({"msg": "图片识别未安装（缺少 PaddleOCR）", "ok": False})
             result = ocr.ocr(path, cls=True)
             text = "\n".join([line[1][0] for line in result[0]]) if result and result[0] else ""
             if not text.strip():
@@ -1015,31 +1026,33 @@ def kb_docs():
     return jsonify({"docs": items})
 
 if __name__ == "__main__":
-    import socket, subprocess, time
-    TUNNEL_MODE = "bore"
-    NGROK_TOKEN = ""
+    import socket, subprocess, time, sys
+    port = int(os.environ.get("PORT", 5000))
+    TUNNEL_MODE = os.environ.get("TUNNEL_MODE", "bore" if os.name == "nt" else "")
+    NGROK_TOKEN = os.environ.get("NGROK_TOKEN", "")
     def start_ngrok():
         try:
             from pyngrok import ngrok, conf
             conf.get_default().auth_token = NGROK_TOKEN
-            return ngrok.connect(5000, bind_tls=True).public_url
+            return ngrok.connect(port, bind_tls=True).public_url
         except: return None
     def start_bore():
         try:
             bore_exe = os.path.expanduser(r"~\AppData\Local\ngrok\bore.exe")
             if not os.path.exists(bore_exe): return None
-            subprocess.Popen([bore_exe, "local", "5000", "--to", "bore.pub"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            time.sleep(3); return "http://bore.pub (端口映射已启动)"
+            subprocess.Popen([bore_exe, "local", str(port), "--to", "bore.pub"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            time.sleep(3); return "http://bore.pub"
         except: return None
     public_url = start_ngrok() if (NGROK_TOKEN or TUNNEL_MODE == "ngrok") else (start_bore() if TUNNEL_MODE == "bore" else None)
     local_ip = socket.gethostbyname(socket.gethostname())
     print("=" * 55)
     print(" 多用户 RAG 问答系统已启动")
-    print(f" 本机访问:   http://127.0.0.1:5000")
-    print(f" 局域网访问: http://{local_ip}:5000")
-    print(f" 外网访问:   {public_url}")
+    print(f" 本机访问:   http://127.0.0.1:{port}")
+    print(f" 局域网访问: http://{local_ip}:{port}")
+    print(f" 外网访问:   {public_url or '未配置'}")
     print(f" LLM: {LLM_MODEL if LLM_API_KEY else '未配置'}")
-    print(f" Ctrl+B 切换侧栏 · Ctrl+K 聚焦输入 · Ctrl+L 新对话")
+    if os.name == "nt":
+        print(f" Ctrl+B 切换侧栏 · Ctrl+K 聚焦输入 · Ctrl+L 新对话")
     print("=" * 55)
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=port)
 
