@@ -6,7 +6,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 
 from . import app
-from .data import embed, load_convs, save_convs, get_user_collection, next_id, client, _doc_counters
+from .data import embed, load_convs, save_convs, get_user_collection, next_id, client, _doc_counters, register_user, check_user
 from .models import get_llm, ocr
 from .templates import LOGIN_HTML, REG_HTML, MAIN_HTML
 
