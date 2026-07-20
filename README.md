@@ -176,7 +176,14 @@ EMBED_MODEL=BAAI/bge-small-zh-v1.5
 
 ```
 rag-knowledge-base/
-├── rag_multi_user.py      # 主程序（Flask 应用 + HTML/CSS/JS 内嵌模板）
+├── rag_multi_user.py      # 入口文件（Procfile 指向此文件）
+├── app/
+│   ├── __init__.py        # Flask 应用工厂
+│   ├── config.py          # 环境变量与路径配置
+│   ├── templates.py       # HTML 模板字符串
+│   ├── services.py        # ML 模型（Embedding / LLM / OCR）
+│   ├── data.py            # 数据层（SQLite / ChromaDB / 对话）
+│   └── routes.py          # 路由处理器（登录、上传、问答等）
 ├── requirements.txt       # Python 依赖清单
 ├── Procfile               # Railway 进程启动配置
 ├── screenshots/           # 功能截图
@@ -188,8 +195,6 @@ rag-knowledge-base/
 │   └── upload.png
 └── README.md              # 本文件
 ```
-
-> **注意**：`rag_multi_user.py` 约 1100 行，集成了 Flask 后端、前端 HTML 模板（含 CSS 样式和 JavaScript 逻辑）于单文件中，便于快速部署。
 
 ---
 
