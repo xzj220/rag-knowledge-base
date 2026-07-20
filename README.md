@@ -176,7 +176,15 @@ EMBED_MODEL=BAAI/bge-small-zh-v1.5
 
 ```
 rag-knowledge-base/
-├── rag_multi_user.py      # 主程序（Flask 应用 + HTML/CSS/JS 内嵌模板）
+├── rag_multi_user.py      # 入口文件（创建 app 并启动服务器）
+├── app/
+│   ├── __init__.py        # Flask 应用创建和模块注册
+│   ├── config.py          # 环境变量、API Key、路径配置
+│   ├── models.py          # Embedding 模型、LLM、OCR 初始化
+│   ├── data.py            # SQLite 用户管理、Chroma 向量库、对话存储
+│   ├── routes.py          # 所有路由处理器（登录、上传、问答等）
+│   └── templates.py       # HTML 模板（登录/注册/主界面）
+├── test_data.txt          # 测试数据（手动录入格式示例）
 ├── requirements.txt       # Python 依赖清单
 ├── Procfile               # Railway 进程启动配置
 ├── screenshots/           # 功能截图
@@ -230,9 +238,9 @@ A:
 ### Q: 手动录入提示"处理失败"？
 A: 确保每行格式为 `问题+是+答案`，例如：
 ```
-张三的电话是138xxxx
-公司的地址是北京市朝阳区
-李四的邮箱是admin@example.com
+小明的电话是13800001111
+小张的电话是13900002222
+小红的工作单位是腾讯科技有限公司
 ```
 系统会按第一个"是"字分割问题和答案。
 
