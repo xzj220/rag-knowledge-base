@@ -791,7 +791,7 @@ function uploadDoc(file) {
 
 function showAddPanel() {
   const body = document.getElementById('kbBody')
-  body.innerHTML = `<div class="panel-section"><textarea id="manualInput" placeholder="每行一条：&#10;张三的电话是138xxxx&#10;李四的邮箱是admin@xx.com"></textarea><button class="btn-sm btn-indigo" onclick="manualAdd()">全部存入</button><div style="margin-top:8px;font-size:11px;color:var(--text3)">格式: 问题+是+答案</div></div>`
+  body.innerHTML = `<div class="panel-section"><textarea id="manualInput" placeholder="每行一条：&#10;小明的电话是13800001111&#10;小张的电话是13900002222"></textarea><button class="btn-sm btn-indigo" onclick="manualAdd()">全部存入</button><div style="margin-top:8px;font-size:11px;color:var(--text3)">格式: 问题+是+答案</div></div>`
 }
 
 function manualAdd() {
