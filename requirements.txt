@@ -11,3 +11,4 @@ unstructured>=0.10
 pypdf>=3.0
 python-docx>=0.8.11
 pyngrok>=7.0
+pytest>=9.0

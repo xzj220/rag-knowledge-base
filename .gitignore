@@ -11,6 +11,9 @@ __pycache__/
 dist/
 build/
 
+# pytest
+.pytest_cache/
+
 # Environment
 .env
 *.log

@@ -113,7 +113,7 @@ python rag_multi_user.py
 | `LLM_API_KEY` | ✅ 建议 | 内置测试 key | LLM 服务的 API 密钥 |
 | `DATA_DIR` | ❌ 可选 | `/data` | 数据存储目录（如用付费版 Volumes 需保持一致） |
 
-> 内置的测试 key（联达AI `sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9`）额度有限，建议替换为你自己的 key。
+> LLM API Key 通过环境变量 `LLM_API_KEY` 配置，未设置时 AI 回答功能不可用。
 
 **步骤 5：部署成功**
 
