@@ -6,7 +6,7 @@ if os.name == "nt":
 
 EMBED_MODEL_NAME = os.environ.get("EMBED_MODEL", "BAAI/bge-small-zh-v1.5")
 
-LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "sk-I75YDDQaLUcQcsPextyYiE5LSIrwPBBLPbIaJJLxh2ooknh9")
 LLM_BASE_URL = os.environ.get("LLM_BASE_URL", "https://lindaai.cn/v1")
 LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-v4-flash")
 

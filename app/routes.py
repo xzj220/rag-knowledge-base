@@ -1,11 +1,12 @@
 import time, re, os, tempfile, shutil, traceback
 from datetime import datetime
 
-from flask import request, jsonify, render_template, session
+from flask import request, jsonify, render_template_string, session
 from langchain_community.document_loaders import TextLoader, PyPDFLoader, UnstructuredWordDocumentLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app import app
+from app.templates import LOGIN_HTML, REG_HTML, MAIN_HTML
 from app.data import (client, _doc_counters, get_user_collection, load_convs,
                       save_convs, next_id, register_user, check_user)
 from app.services import embed, get_llm, ocr
@@ -14,8 +15,8 @@ from app.services import embed, get_llm, ocr
 @app.route("/")
 def index():
     if "user" in session:
-        return render_template("main.html", user=session["user"])
-    return render_template("login.html", err="")
+        return render_template_string(MAIN_HTML, user=session["user"])
+    return render_template_string(LOGIN_HTML, err="")
 
 
 @app.route("/login", methods=["POST"])
@@ -24,29 +25,29 @@ def login():
     if check_user(u, p):
         session["user"] = u
         get_user_collection(u)
-        return render_template("main.html", user=u)
-    return render_template("login.html", err="用户名或密码错误")
+        return render_template_string(MAIN_HTML, user=u)
+    return render_template_string(LOGIN_HTML, err="用户名或密码错误")
 
 
 @app.route("/reg")
 def reg_page():
-    return render_template("register.html", msg="", err="")
+    return render_template_string(REG_HTML, msg="", err="")
 
 
 @app.route("/register", methods=["POST"])
 def register():
     u, p = request.form["username"], request.form["password"]
     if len(u) < 2 or len(p) < 3:
-        return render_template("register.html", msg="", err="用户名至少2位，密码至少3位")
+        return render_template_string(REG_HTML, msg="", err="用户名至少2位，密码至少3位")
     if register_user(u, p):
-        return render_template("register.html", msg="注册成功，去登录", err="")
-    return render_template("register.html", msg="", err="用户名已存在")
+        return render_template_string(REG_HTML, msg="注册成功，去登录", err="")
+    return render_template_string(REG_HTML, msg="", err="用户名已存在")
 
 
 @app.route("/logout")
 def logout():
     session.pop("user", None)
-    return render_template("login.html", err="")
+    return render_template_string(LOGIN_HTML, err="")
 
 
 @app.route("/add_batch", methods=["POST"])
