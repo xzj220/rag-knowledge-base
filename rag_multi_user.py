@@ -1,7 +1,7 @@
 ﻿import os, socket, subprocess, time, sys
 
 from app import app
-from app.config import LLM_MODEL, LLM_API_KEY, DATA_DIR
+from app.config import LLM_MODEL, LLM_API_KEY
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

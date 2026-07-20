@@ -180,10 +180,13 @@ rag-knowledge-base/
 ├── app/
 │   ├── __init__.py        # Flask 应用工厂
 │   ├── config.py          # 环境变量与路径配置
-│   ├── templates.py       # HTML 模板字符串
 │   ├── services.py        # ML 模型（Embedding / LLM / OCR）
 │   ├── data.py            # 数据层（SQLite / ChromaDB / 对话）
-│   └── routes.py          # 路由处理器（登录、上传、问答等）
+│   ├── routes.py          # 路由处理器（登录、上传、问答等）
+│   └── templates/         # Jinja2 HTML 模板
+│       ├── login.html
+│       ├── register.html
+│       └── main.html
 ├── requirements.txt       # Python 依赖清单
 ├── Procfile               # Railway 进程启动配置
 ├── screenshots/           # 功能截图
