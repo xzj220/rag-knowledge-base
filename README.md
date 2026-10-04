@@ -57,7 +57,7 @@
 | **Web 框架** | Flask | 轻量 Python Web 框架 |
 | **向量数据库** | ChromaDB | 持久化向量存储，支持相似度检索 |
 | **嵌入模型** | BAAI/bge-small-zh-v1.5 | 33MB，中文优化，轻量 |
-| **LLM** | OpenAI 兼容 API | 默认联达AI deepseek-v4-flash，可切换 |
+| **LLM** | OpenAI 兼容 API | 默认 DeepSeek 官方 deepseek-chat，可切换 |
 | **文档解析** | LangChain | PyPDFLoader / TextLoader / UnstructuredWordDocumentLoader |
 | **OCR** | PaddleOCR | 可选依赖，图片文字识别 |
 | **文本分割** | RecursiveCharacterTextSplitter | 智能文档分块（500字/块，重叠100字） |
@@ -94,8 +94,8 @@ copy .env.example .env    # Windows
 
 ```
 LLM_API_KEY=sk-你的key
-LLM_BASE_URL=https://lindaai.cn/v1
-LLM_MODEL=deepseek-v4-flash
+LLM_BASE_URL=https://api.deepseek.com/v1
+LLM_MODEL=deepseek-chat
 ```
 
 > `.env` 已被 `.gitignore` 忽略，**不会**被提交到仓库。
@@ -121,20 +121,15 @@ python rag_multi_user.py
 系统使用 OpenAI 兼容 API，支持所有兼容的 LLM 服务：
 
 ```bash
-# 联达AI（默认，国内直连）
+# DeepSeek 官方（默认，国内直连）
 LLM_API_KEY=sk-xxx
-LLM_BASE_URL=https://lindaai.cn/v1
-LLM_MODEL=deepseek-v4-flash
+LLM_BASE_URL=https://api.deepseek.com/v1
+LLM_MODEL=deepseek-chat
 
 # OpenAI
 LLM_API_KEY=sk-xxx
 LLM_BASE_URL=https://api.openai.com/v1
 LLM_MODEL=gpt-4o-mini
-
-# DeepSeek 官方
-LLM_API_KEY=sk-xxx
-LLM_BASE_URL=https://api.deepseek.com/v1
-LLM_MODEL=deepseek-chat
 
 # 硅基流动（国内直连，有免费额度）
 LLM_API_KEY=sk-xxx
