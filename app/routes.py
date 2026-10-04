@@ -230,6 +230,7 @@ def save_conv():
     else:
         data["id"] = f"c{int(time.time())}"
         data["created_at"] = datetime.now().isoformat()
+        data.setdefault("topic", "未分类")
         convs.insert(0, data)
     save_convs(session["user"], convs)
     return jsonify({"ok": True, "id": data["id"]})

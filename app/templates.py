@@ -90,11 +90,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 .conv-item{display:flex;align-items:center;padding:6px 12px 6px 20px;cursor:pointer;border-left:2px solid transparent;gap:6px;border-radius:0 6px 6px 0;margin:1px 0}
 .conv-item:hover{background:var(--bg3)}
 .conv-item.active{border-left-color:var(--indigo);background:var(--bg3)}
-.conv-item .conv-time{font-size:11px;color:var(--text3);flex-shrink:0;width:36px}
+.conv-item .conv-time{font-size:11px;color:var(--text3);flex-shrink:0;width:62px}
 .conv-item .conv-title{flex:1;padding:0;color:var(--text2);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .conv-item .conv-del{background:none;border:none;color:transparent;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;flex-shrink:0}
 .conv-item:hover .conv-del{color:var(--text3)}
 .conv-item .conv-del:hover{color:var(--rose)!important}
+.conv-item .conv-tag{background:none;border:none;color:transparent;cursor:pointer;font-size:12px;padding:2px 5px;border-radius:4px;flex-shrink:0}
+.conv-item:hover .conv-tag{color:var(--text3)}
+.conv-item .conv-tag:hover{color:var(--indigo)!important}
 /* ===== TOAST ===== */
 .toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);padding:8px 20px;border-radius:var(--radius);font-size:13px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 .toast.show{opacity:1}
@@ -285,7 +288,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15
 <div class="conv-overlay" id="convOverlay" onclick="if(event.target===this)hideConvList()">
   <div class="co-header" onclick="event.stopPropagation()">
     <button class="back-btn" onclick="hideConvList()">←</button>
-    <h3>历史对话</h3>
+    <h3>历史对话 · 按主题</h3>
     <span id="convTotal" style="font-size:12px;color:var(--text3)"></span>
   </div>
   <div class="conv-list" id="convList" onclick="event.stopPropagation()"></div>
@@ -498,7 +501,19 @@ function toggleFolder(el) {
   const body = el.nextElementSibling
   const icon = el.querySelector('.folder-icon')
   body.classList.toggle('open')
-  icon.textContent = body.classList.contains('open') ? '▼' : '▶'
+  icon.textContent = body.classList.contains('open') ? '\u25BE' : '\u25B8'
+}
+
+function editTopic(id) {
+  const conv = convs.find(c => c.id === id)
+  if (!conv) return
+  const cur = conv.topic || '未分类'
+  const t = prompt('给这条对话设置主题（用于分类），例如：学习 / 工作 / 生活 / 项目A', cur)
+  if (t === null) return
+  const topic = t.trim() || '未分类'
+  fetch('/conversations', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id: id, topic: topic})})
+    .then(r => r.json()).then(() => { conv.topic = topic; renderConvList(); toast('主题已更新：' + topic, 'ok') })
+    .catch(() => toast('更新失败', 'err'))
 }
 
 function renderConvList() {
@@ -508,34 +523,36 @@ function renderConvList() {
     el.innerHTML = '<div class="conv-empty">暂无历史对话</div>'
     return
   }
-  // Group by date (e.g. "2024年7月17日 星期三")
+  // ===== 按主题（分类）分组 =====
   const groups = {}
   convs.forEach(c => {
-    const d = new Date(c.updated_at || c.created_at)
-    const wk = ['日','一','二','三','四','五','六'][d.getDay()]
-    const key = d.getFullYear() + '年' + (d.getMonth()+1) + '月' + d.getDate() + '日 星期' + wk
+    const key = (c.topic && c.topic.trim()) ? c.topic.trim() : '未分类'
     if (!groups[key]) groups[key] = []
     groups[key].push(c)
   })
-  // Sort dates descending
-  const sorted = Object.keys(groups).sort((a, b) => new Date(b.replace('年','/').replace('月','/').replace('日','')) - new Date(a.replace('年','/').replace('月','/').replace('日','')))
+  // 主题排序：未分类最后，其余按中文名
+  const sorted = Object.keys(groups).sort((a, b) => {
+    if (a === '未分类') return 1
+    if (b === '未分类') return -1
+    return a.localeCompare(b, 'zh')
+  })
   let html = ''
-  sorted.forEach(dateKey => {
-    const items = groups[dateKey]
-    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">▶</span><span class="folder-label">${dateKey}</span><span class="folder-count">${items.length} 条</span></div><div class="conv-folder-body">`
+  sorted.forEach(topicKey => {
+    const items = groups[topicKey]
+    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">\u25B8</span><span class="folder-label">${escHtml(topicKey)}</span><span class="folder-count">${items.length} 条</span></div><div class="conv-folder-body">`
     items.forEach(c => {
       const active = c.id === curConvId ? ' active' : ''
       const firstMsg = (c.messages && c.messages.length) ? c.messages[0].html.replace(/<[^>]*>/g,'').slice(0,28) : (c.title || '新对话')
       const d = new Date(c.updated_at || c.created_at)
-      const ts = d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
-      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="删除">✕</button></div>`
+      const ts = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
+      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-tag" onclick="event.stopPropagation();editTopic('${c.id}')" title="设置主题">\uD83C\uDFF7</button><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="删除">\u2715</button></div>`
     })
     html += '</div></div>'
   })
   el.innerHTML = html
-  // Auto-open first folder
+  // 默认展开第一个主题
   const first = el.querySelector('.conv-folder-body')
-  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '▼' }
+  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '\u25BE' }
 }
 
 function loadConversation(id) {
@@ -576,7 +593,8 @@ function deleteConversation(id) {
 function saveConv() {
   if (msgs.length === 0) return
   const title = msgs[0].html.replace(/<[^>]*>/g,'').slice(0,40)
-  const data = {id: curConvId, title, messages: msgs, updated_at: new Date().toISOString()}
+  const _exist = convs.find(c => c.id === curConvId)
+  const data = {id: curConvId, title, topic: (_exist && _exist.topic) || '未分类', messages: msgs, updated_at: new Date().toISOString()}
   fetch('/conversations', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
     .then(r => r.json()).then(d => { curConvId = d.id; loadConvList() }).catch(() => {})
 }
