@@ -1,7 +1,8 @@
-# Runtime data (user-specific, regenerated on first run)
-D:/rag_multi_db/
-D:/rag_users.db
-D:/rag_conversations/
+# 本地运行时生成的数据（用户库 / 向量库 / 对话历史）
+data/
+
+# 环境变量文件（含 API Key，切勿提交）
+.env
 
 # Python
 __pycache__/
@@ -14,8 +15,7 @@ build/
 # pytest
 .pytest_cache/
 
-# Environment
-.env
+# 日志
 *.log
 *.log.*
 
