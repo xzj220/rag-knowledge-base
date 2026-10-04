@@ -501,7 +501,7 @@ function toggleFolder(el) {
   const body = el.nextElementSibling
   const icon = el.querySelector('.folder-icon')
   body.classList.toggle('open')
-  icon.textContent = body.classList.contains('open') ? '\u25BE' : '\u25B8'
+  icon.textContent = body.classList.contains('open') ? '▾' : '▸'
 }
 
 function editTopic(id) {
@@ -539,20 +539,20 @@ function renderConvList() {
   let html = ''
   sorted.forEach(topicKey => {
     const items = groups[topicKey]
-    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">\u25B8</span><span class="folder-label">${escHtml(topicKey)}</span><span class="folder-count">${items.length} 条</span></div><div class="conv-folder-body">`
+    html += `<div class="conv-folder"><div class="conv-folder-head" onclick="toggleFolder(this)"><span class="folder-icon">▸</span><span class="folder-label">${escHtml(topicKey)}</span><span class="folder-count">${items.length} 条</span></div><div class="conv-folder-body">`
     items.forEach(c => {
       const active = c.id === curConvId ? ' active' : ''
       const firstMsg = (c.messages && c.messages.length) ? c.messages[0].html.replace(/<[^>]*>/g,'').slice(0,28) : (c.title || '新对话')
       const d = new Date(c.updated_at || c.created_at)
       const ts = (d.getMonth()+1) + '/' + d.getDate() + ' ' + d.toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})
-      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-tag" onclick="event.stopPropagation();editTopic('${c.id}')" title="设置主题">\uD83C\uDFF7</button><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="删除">\u2715</button></div>`
+      html += `<div class="conv-item${active}" onclick="loadConversation('${c.id}')"><span class="conv-time">${ts}</span><span class="conv-title">${escHtml(firstMsg)}</span><button class="conv-tag" onclick="event.stopPropagation();editTopic('${c.id}')" title="设置主题">🏷</button><button class="conv-del" onclick="event.stopPropagation();deleteConversation('${c.id}')" title="删除">✕</button></div>`
     })
     html += '</div></div>'
   })
   el.innerHTML = html
   // 默认展开第一个主题
   const first = el.querySelector('.conv-folder-body')
-  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '\u25BE' }
+  if (first) { first.classList.add('open'); el.querySelector('.folder-icon').textContent = '▾' }
 }
 
 function loadConversation(id) {
